@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.78.0 commit date:2016-10-24, commit time:12:20, hash:e8299c8</authoring_tool>
+    </contributor>
+    <created>2017-04-01T19:19:17</created>
+    <modified>2017-04-01T19:19:17</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Armature" name="Armature" type="NODE">
+        <translate sid="location">0 0 0</translate>
+        <rotate sid="rotationZ">0 0 1 0</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 1 1</scale>
+
+        <node id="ROOT" name="ROOT" sid="ROOT" type="JOINT">
+          <matrix sid="transform">0.0000016093254 -0.9999999 0.00000029802322 0.000000004929717 0.1840311 0.0000006556511 0.9829203 -0.1127788 -0.98292035 -0.0000014007092 0.18403122 3.590765 0.0 0.0 0.0 1.0</matrix>
+          <node id="Footsteps" name="Footsteps" sid="Footsteps" type="JOINT">
+            <matrix sid="transform">0.0000011324883 0.18403098 -0.98292065 0.5704284 -1.0000001 0.00000017881393 -0.0000012814999 0.0000007937242 0.00000008940697 0.98292065 0.1840308 -0.106800616 0.0 0.0 0.0 1.0</matrix>
+          </node>
+          <node id="Pelvis" name="Pelvis" sid="Pelvis" type="JOINT">
+            <matrix sid="transform">-0.00000047683716 -1.0000002 -0.0000013113022 0.0 0.0000013113022 0.0000010728836 -1.0000002 0.0 1.0000002 -0.00000023841858 0.0000010728836 0.0 0.0 0.0 0.0 1.0</matrix>
+          
+            <node id="Spine" name="Spine" sid="Spine" type="JOINT">
+              <matrix sid="transform">0.99999946 -0.001019448 -0.0000013839727 0.29665816 0.001019448 0.99999946 -0.0000041603994 -0.085639715 0.0000013882133 0.000004158986 1.0 0.00000016516333 0.0 0.0 0.0 1.0</matrix>
+            
+              <node id="Spine1" name="Spine1" sid="Spine1" type="JOINT">
+                <matrix sid="transform">0.9766526 0.21482466 -0.0000005958376 0.5200584 -0.21482466 0.9766526 0.00000006475624 0.00043821335 0.0000005958376 0.00000006475624 1.0 -0.0000000012155397 0.0 0.0 0.0 1.0</matrix>
+              
+                <node id="Neck" name="Neck" sid="Neck" type="JOINT">
+                  <matrix sid="transform">0.9873317 -0.15866983 0.0000006639551 0.59723234 0.15866983 0.9873317 0.00000007892572 0.14633512 -0.00000066806706 0.000000027423768 1.0 -0.00000020519292 0.0 0.0 0.0 1.0</matrix>
+                
+                  <node id="Head" name="Head" sid="Head" type="JOINT">
+                    <matrix sid="transform">
+                      0.47010303 -0.8826116 0.0000030492693 0.24668789 0.8826116 0.47010303 0.0000027285005 0.0 -0.000003841677 0.0000014086439 1.0 0.00000000000045474735 0.0 0.0 0.0 1.0
+                    </matrix>
+
+                    <node id="HeadNub" name="HeadNub" sid="HeadNub" type="JOINT">
+                      <matrix sid="transform">1.0 0.000000014901161 0.00000000000005684342 0.77295494 -0.000000014901161 1.0 -0.00000000000002842171 0.00000011920929 -0.00000000000005684342 0.00000000000002842171 1.0 0.0 0.0 0.0 0.0 1.0</matrix>
+                    </node>
+
+                    <node id="Bone01" name="Bone01" sid="Bone01" type="JOINT">
+                      <matrix sid="transform">0.0000016093254 -0.9999999 0.00000029802322 0.000000004929717 0.1840311 0.0000006556511 0.9829203 -0.1127788 -0.98292035 -0.0000014007092 0.18403122 3.590765 0.0 0.0 0.0 1.0</matrix>
+                    </node>
+                  </node>
+                  
+                  <node id="L. Clavicle" name="L. Clavicle" sid="L. Clavicle" type="JOINT">
+                    <matrix sid="transform">0.0000011324883 0.18403098 -0.98292065 0.5704284 -1.0000001 0.00000017881393 -0.0000012814999 0.0000007937242 0.00000008940697 0.98292065 0.1840308 -0.106800616 0.0 0.0 0.0 1.0</matrix>
+                  </node>
+
+                </node>
+              </node>
+
+            </node>
+          </node>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <library_geometries>
+    <geometry id="TestMesh">
+
+    </geometry>
+  </library_geometries>
+  <library_controllers>
+    <controller id="Armature_Cube-skin" name="Armature">
+      <skin source="#TestMesh">
+        <bind_shape_matrix>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</bind_shape_matrix>
+        <source id="Armature_Cube-skin-joints">
+          <Name_array id="Armature_Cube-skin-joints-array" count="8">ROOT Footsteps Pelvis Spine Spine1 Neck Head HeadNub</Name_array>
+          <technique_common>
+            <accessor source="#Armature_Cube-skin-joints-array" count="8" stride="1">
+              <param name="JOINT" type="name"/>
+            </accessor>
+          </technique_common>
+        </source>
+
+        <source id="Armature_Cube-skin-bind_poses">
+          <float_array id="Armature_Cube-skin-bind_poses-array" count="128">
+            0.0000013766586 0.18403114 -0.9829205 3.5501914 -1.0 0.00000046831187 -0.0000013676872 0.0000049687887 0.00000022737271 0.9829205 0.18403105 -0.54995966 0.0 0.0 0.0 1.0
+            1.0 -0.0 -0.0000000000000532907 -0.0000000049298587 -0.000000000000028421706 0.9999999 0.000000014901158 0.112778775 0.00000000000003552713 0.0 0.9999999 -0.54498667 0.0 0.0 0.0 1.0
+            -0.0000011594275 0.9829203 0.18403102 -0.54995954 -0.0000027634585 -0.1840311 0.9829203 -3.5501907 1.0 0.00000063958794 0.0000029860153 -0.000010654877 0.0 0.0 0.0 1.0
+            0.0000002259693 0.9827322 0.18503298 -0.8501493 0.0000013967106 -0.18503305 0.9827322 -3.463686 1.0 0.000000044896158 -0.0000013580195 0.0000047655703 0.0 0.0 0.0 1.0
+            0.0000005164832 0.9995375 -0.030402143 -0.59403765 0.0000014774009 0.030402068 0.9995376 -3.6776004 1.0 -0.0000005526347 -0.0000014046311 0.000005358884 0.0 0.0 0.0 1.0
+            -0.000002421195 0.000001918634 1.0000001 -0.000001115045 0.3527148 -0.93573093 0.0000023045413 1.8242481 0.9357312 0.35271454 0.0000016530417 4.5409493 0.0 0.0 0.0 1.0
+            0.000000076292146 0.99169904 0.12857948 -1.7829219 0.0000014041584 -0.12857953 0.99169916 -3.5864744 1.0 0.00000011341293 -0.0000013459277 0.0000044713206 0.0 0.0 0.0 1.0
+            -0.0000025664854 0.35271496 0.9357306 -4.119589 0.000002001407 -0.9357305 0.3527151 0.10534406 1.0 0.000002786541 0.0000017519969 -0.000011503202 0.0 0.0 0.0 1.0
+            -0.0000025664856 0.35271496 0.9357306 -4.892544 0.0000020014072 -0.9357305 0.35271513 0.1053437 1.0 0.000002786541 0.0000017519969 -0.000011503202 0.0 0.0, 0.0, 1.0
+          </float_array>
+          <technique_common>
+            <accessor source="#Armature_Cube-skin-bind_poses-array" count="128" stride="16">
+              <param name="TRANSFORM" type="float4x4" />
+            </accessor>
+          </technique_common>
+        </source>
+
+        <joints>
+          <input semantic="JOINT" source="#Armature_Cube-skin-joints" />
+          <input semantic="INV_BIND_MATRIX" source="#Armature_Cube-skin-bind_poses" />
+        </joints>
+
+      </skin>
+    </controller>
+  </library_controllers>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
