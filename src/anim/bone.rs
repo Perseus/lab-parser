@@ -7,6 +7,7 @@ use crate::ui::camera::{*, self};
 use xmlwriter::*;
 use std::collections::HashMap;
 use std::cell::RefCell;
+use std::io::prelude::*;
 
 use super::d3d::{lwMatrix43, lwMatrix44};
 
@@ -58,7 +59,7 @@ pub struct lwAnimDataBone<'a> {
   bones: HashMap<u32, RefCell<joint<'a>>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct joint<'a> {
   parent: Option<&'a RefCell<joint<'a>>>,
   children: Vec<&'a RefCell<joint<'a>>>,
@@ -328,9 +329,92 @@ impl<'a> lwAnimDataBone<'a> {
     finish_matrices
   }
 
-  fn create_joint_hierarchy(&'a mut self) {
+  pub fn get_transforms_for_frame_and_bone(&self, frame: usize, bone: usize) -> Vec<Matrix4<f32>> {
+    let mut finish_matrices: Vec<Matrix4<f32>>  = Vec::new();
+    let key = &self.key_seq[bone];
+      let frame_quat = match &key.quat_seq {
+        Some(e) => {
+          e
+        },
+        None => {
+          panic!("No frame_quat found");
+        }
+      };
+      let frame_pos = match &key.pos_seq {
+        Some(e) => {
+          e
+        },
+        None => {
+          panic!("No frame_pos found");
+        }
+      };
+      let mut current_matrix: Matrix4<f32> = SquareMatrix::identity();
 
+
+      match &self.header.key_type {
+        lwBoneInfoKeyType::BoneKeyTypeQuat => {
+          let quat: Quaternion<f32> = Quaternion::from(frame_quat[frame]);
+          let offset: Vector3<f32> = Vector3::from(frame_pos[frame]);
+          let mat1 = Matrix4::from(quat);
+          let mat2 = Matrix4::from_translation(offset);
+          current_matrix = Matrix4::from(quat) * Matrix4::from_translation(offset);
+        },
+
+        _ => {
+
+        }
+      }
+
+      // if self.base_seq[bone].parent_id != u32::MAX && *&self.base_seq[bone].parent_id < self.header.bone_num {
+      //   current_matrix = current_matrix * finish_matrices[self.base_seq[bone].parent_id as usize];
+      // }
+
+      finish_matrices.push(current_matrix);
+
+      finish_matrices
+  }
+
+  fn create_joint_hierarchy(&'a mut self) {
+    
     // create a map with some minimal information about all the bones, keyed by their ids
+   
+  }
+
+  pub fn apply_transforms(&self, transforms: Vec<Matrix4<f32>>) -> Vec<Vector3<f32>> {
+    let mut positions: Vec<Vector3<f32>> = Vec::with_capacity(self.header.bone_num as usize);
+
+    for i in 0..self.header.bone_num as usize {
+      let inv_mat = Matrix4::from(self.invmat_seq[i].matrix);
+      let original_mat = inv_mat.invert().unwrap();
+      let start_pos = Vector3::new(original_mat[0][3], original_mat[1][3], original_mat[2][3]);
+      let transformation_matrix = inv_mat * transforms[i];
+      
+      if i >= 8 {
+        println!("{:?}", transformation_matrix);
+      }
+      positions.push(transformation_matrix.transform_vector(start_pos));
+    }
+
+    positions
+  }
+
+
+  pub fn get_num_bones(&self) -> u32 {
+    self.header.bone_num
+  }
+
+  pub fn get_num_frames(&self) -> u32 {
+    self.header.frame_num
+  }
+
+  pub fn add_vertices_to_vec(&'a mut self) {
+    
+    // self.create_joint_hierarchy();
+  }
+
+  pub fn write_joints_to_file(&'a mut self, frame: usize) {
+    
+      // create a map with some minimal information about all the bones, keyed by their ids
     for i in 0..self.get_num_bones() as usize {
       let bone_data = &self.base_seq[i];
       let current_node = joint{
@@ -384,8 +468,8 @@ impl<'a> lwAnimDataBone<'a> {
 
       match self.header.key_type {
         lwBoneInfoKeyType::BoneKeyTypeQuat => {
-          let quat: Quaternion<f32> = Quaternion::from(frame_quat[0]);
-          let offset: Vector3<f32> = Vector3::from(frame_pos[0]);
+          let quat: Quaternion<f32> = Quaternion::from(frame_quat[frame]);
+          let offset: Vector3<f32> = Vector3::from(frame_pos[frame]);
           current_matrix = Matrix4::from(quat) * Matrix4::from_translation(offset);
         },
         _ => {
@@ -402,43 +486,12 @@ impl<'a> lwAnimDataBone<'a> {
           println!("No joint found for bone {}", i);
         }
       }
-    }
-  }
 
-  pub fn apply_transforms(&self, transforms: Vec<Matrix4<f32>>) -> Vec<Vector3<f32>> {
-    let mut positions: Vec<Vector3<f32>> = Vec::with_capacity(self.header.bone_num as usize);
-
-    for i in 0..self.header.bone_num as usize {
-      let inv_mat = Matrix4::from(self.invmat_seq[i].matrix);
-      let original_mat = inv_mat.invert().unwrap();
-      let start_pos = Vector3::new(original_mat[0][3], original_mat[1][3], original_mat[2][3]);
-      let transformation_matrix = inv_mat * transforms[i];
-      
-      if i >= 8 {
-        println!("{:?}", transformation_matrix);
-      }
-      positions.push(transformation_matrix.transform_vector(start_pos));
     }
 
-    positions
-  }
-
-
-  pub fn get_num_bones(&self) -> u32 {
-    self.header.bone_num
-  }
-
-  pub fn get_num_frames(&self) -> u32 {
-    self.header.frame_num
-  }
-
-  pub fn add_vertices_to_vec(&'a mut self) {
+    self.joints = Some(self.bones.get(&0).unwrap().take());
     
-    // self.create_joint_hierarchy();
-  }
-
-  pub fn write_joints_to_file(&'a mut self) {
-    self.create_joint_hierarchy();
+    
 
     let opt = Options {
       use_single_quote: false,
@@ -446,24 +499,137 @@ impl<'a> lwAnimDataBone<'a> {
     };
 
     let mut w = XmlWriter::new(opt);
-    let joints = &self.joints;
-    match joints {
-      Some(j) => {
-        lwAnimDataBone::write_node(*j, &mut w);
-        // w.start_element("node");
-        // lwAnimDataBone::write_ele_attrs(&mut w, j.bone_name.as_str());
-        // lwAnimDataBone::write_matrix(, matrix)
-      },
+
+
+    let root_joint = match &self.joints {
+      Some(j) => j,
       None => {
-        
+        panic!("No root joint found")
       }
+    };
+    
+
+    for i in 0..self.header.bone_num as usize {
+      self.write_node(&self.base_seq[i], &mut w);
     }
 
+    // self.write_node(root_joint, &mut w);
+    let xml_data = w.end_document();
+
+    let mut file = File::create("rand.xml").unwrap();
+    file.write_all(xml_data.as_bytes()).unwrap();
   }
 
-  fn write_node(node: joint, writer: &mut XmlWriter) {
-    writer.start_element("node");
-    lwAnimDataBone::write_ele_attrs(writer, node.bone_name.as_str());
+  fn write_node(&self, node: &lwBoneBaseInfo, writer: &mut XmlWriter) {
+    let base_anim_id = [node.get_name().to_owned(), String::from("_pose_matrix")].join("");
+
+    writer.start_element("animation");
+    writer.write_attribute("id", &base_anim_id);
+
+    writer.start_element("source");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "-input"));
+    writer.start_element("float_array");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "-input-array"));
+    writer.write_attribute("count", &self.header.frame_num);
+    for i in 1..(self.header.frame_num+1) as usize {
+      let time: f32 = i as f32 / 25.0 ;
+      writer.write_text(&(time.to_string() + " "));
+    }
+    writer.end_element();
+
+    writer.start_element("technique_common");
+    writer.start_element("accessor");
+    writer.write_attribute("source", &("#".to_owned() + &base_anim_id + "-input-array"));
+    writer.write_attribute("count", &self.header.frame_num);
+    writer.write_attribute("stride", &1);
+    writer.start_element("param");
+    writer.write_attribute("name", "TIME");
+    writer.write_attribute("type", "float");
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+
+    writer.start_element("source");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "-output"));
+    writer.start_element("float_array");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "-output-array"));
+    writer.write_attribute("count", &(16 * self.header.frame_num));
+
+    let mut all_transforms: Vec<Vec<Matrix4<f32>>> = Vec::new();
+    for i in 0..self.header.frame_num {
+      let transforms = self.get_transforms_for_frame_and_bone(i as usize, node.id as usize);
+      let mut one: Vec<Matrix4<f32>> = Vec::new();
+      all_transforms.push(transforms);
+    }
+
+    lwAnimDataBone::write_all_matrices(writer, all_transforms);
+    writer.end_element();
+
+    writer.start_element("technique_common");
+    writer.start_element("accessor");
+    writer.write_attribute("source", &("#".to_owned() + &base_anim_id + "-output-array"));
+    writer.write_attribute("count", &self.header.frame_num);
+    writer.write_attribute("stride", &16);
+    writer.start_element("param");
+    writer.write_attribute("name", "TRANSFORM");
+    writer.write_attribute("type", "float4x4");
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+
+
+    writer.start_element("source");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-interpolation"));
+    writer.start_element("Name_array");
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-interpolation-array"));
+    writer.write_attribute("count", &self.header.frame_num);
+    for _ in 0..self.header.frame_num {
+      writer.write_text("LINEAR ");
+    }
+    writer.end_element();
+    writer.start_element("technique_common");
+    writer.start_element("accessor");
+    writer.write_attribute("accessor", &("#".to_string() + &base_anim_id + "_matrix-interpolation-array"));
+    writer.write_attribute("count", &self.header.frame_num);
+    writer.write_attribute("stride", &1);
+    writer.start_element("param");
+    writer.write_attribute("name", "INTERPOLATION");
+    writer.write_attribute("type", "name");
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+    writer.end_element();
+
+    writer.start_element("sampler");
+
+    writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-sampler"));
+    writer.start_element("input");
+    writer.write_attribute("semantic", "INPUT");
+    writer.write_attribute("source", &("#".to_string() + &base_anim_id + "-input"));
+    writer.end_element();
+    writer.start_element("input");
+    writer.write_attribute("semantic", "OUTPUT");
+    writer.write_attribute("source", &("#".to_string() + &base_anim_id + "-output"));
+    writer.end_element();
+    writer.start_element("input");
+    writer.write_attribute("semantic", "INTERPOLATION");
+    writer.write_attribute("source", &("#".to_string() + &base_anim_id + "_matrix-interpolation"));
+    writer.end_element();
+    writer.end_element();
+    
+    writer.start_element("channel");
+    writer.write_attribute("source", &("#".to_string() + &base_anim_id + "_matrix-sampler"));
+    writer.write_attribute("target", &(node.get_name().to_owned() + "/transform"));
+    writer.end_element();
+    writer.end_element();
+    // lwAnimDataBone::write_ele_attrs(writer, node.bone_name.as_str());
+
+    // for i in 0..node.children.len() {
+    //   let child = (*(node.children[i])).take();
+    //   self.write_node(&child, writer);
+    // }
   }
 
   pub fn write_ele_attrs(ele: &mut XmlWriter, name: &str) {
@@ -476,7 +642,16 @@ impl<'a> lwAnimDataBone<'a> {
   pub fn write_matrix(ele: &mut XmlWriter, matrix: Matrix4<f32>) {
     ele.start_element("matrix");
     ele.write_attribute("sid", "transform");
-    ele.write_text_fmt(format_args!("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3], matrix[1][0], matrix[1][1], matrix[1][2], matrix[1][3], matrix[2][0], matrix[2][1], matrix[2][2], matrix[2][3], matrix[3][0], matrix[3][1], matrix[3][2], matrix[3][3]));
+    ele.write_text_fmt(format_args!("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} ", matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3], matrix[1][0], matrix[1][1], matrix[1][2], matrix[1][3], matrix[2][0], matrix[2][1], matrix[2][2], matrix[2][3], matrix[3][0], matrix[3][1], matrix[3][2], matrix[3][3]));
     ele.end_element();
+  }
+
+  pub fn write_all_matrices(ele: &mut XmlWriter, matrix: Vec<Vec<Matrix4<f32>>>) {
+    for i in 0..matrix.len() {
+      for j in 0..matrix[i].len() {
+        let mat = matrix[i][j];
+        ele.write_text_fmt(format_args!("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", mat[0][0], mat[0][1], mat[0][2], mat[0][3], mat[1][0], mat[1][1], mat[1][2], mat[1][3], mat[2][0], mat[2][1], mat[2][2], mat[2][3], mat[3][0], mat[3][1], mat[3][2], mat[3][3]));
+      }
+    }
   }
 }

@@ -35,5 +35,5 @@ fn main() {
     // lwAnimDataBone::load_from_file(&mut file);
     let mut anim_data = lwAnimDataBone::new();
     anim_data.load_from_file(&mut file);
-    anim_data.write_joints_to_file();
+    anim_data.write_joints_to_file(0);
 }
