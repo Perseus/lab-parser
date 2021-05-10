@@ -11,6 +11,17 @@ pub struct lwMatrix43 {
   pub matrix: [[f32; 3]; 4],
 }
 
+impl lwMatrix43 {
+  pub fn get_matrix4(&self) -> Matrix4<f32> {
+    Matrix4::new(
+      self.matrix[0][0], self.matrix[1][0], self.matrix[2][0], self.matrix[3][0],
+      self.matrix[0][1], self.matrix[1][1], self.matrix[2][1], self.matrix[3][1],
+      self.matrix[0][2], self.matrix[1][2], self.matrix[2][2], self.matrix[3][2],
+      0.0, 0.0, 0.0, 1.0,
+    )
+  }
+}
+
 impl lwMatrix44 {
   pub fn new(mat: [[f32; 4]; 4]) -> lwMatrix44 {
     lwMatrix44{
