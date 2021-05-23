@@ -8,6 +8,9 @@ use std::io::{Seek, SeekFrom};
 use std::path::Path;
 use std::{fs::File, io::Read, mem::size_of, u32};
 use xmlwriter::*;
+use collada::{document::ColladaDocument};
+
+use crate::main;
 
 use super::d3d::{lwMatrix43, lwMatrix44};
 
@@ -153,8 +156,6 @@ impl<'a> AnimDataBone<'a> {
             root_joint: None,
         }
     }
-
-    //
 
     pub fn load_from_file(&'a mut self, file: &mut File) -> String {
         // load all animation related data from the file
@@ -530,10 +531,6 @@ impl<'a> AnimDataBone<'a> {
                 _ => {}
             }
 
-            // if self.base_seq[i].parent_id != u32::MAX && *&self.base_seq[i].parent_id < self.header.bone_num {
-            //   current_matrix = current_matrix * finish_matrices[self.base_seq[i].parent_id as usize];
-            // }
-
             finish_matrices.push(current_matrix);
         }
 
@@ -572,10 +569,6 @@ impl<'a> AnimDataBone<'a> {
 
             _ => {}
         }
-
-        // if self.base_seq[bone].parent_id != u32::MAX && *&self.base_seq[bone].parent_id < self.header.bone_num {
-        //   current_matrix = current_matrix * finish_matrices[self.base_seq[bone].parent_id as usize];
-        // }
 
         finish_matrices.push(current_matrix);
 
@@ -719,7 +712,8 @@ impl<'a> AnimDataBone<'a> {
 
       writer.start_element("animation");
       writer.write_attribute("id", &format!("{}_pose_matrix", sanitized_bone_name));
-      
+      writer.write_attribute("name", &format!("{}_pose_matrix", sanitized_bone_name));
+    
       writer.start_element("source");
       writer.write_attribute("id", &format!("{}_pose_matrix-input", sanitized_bone_name));
 
@@ -818,228 +812,6 @@ impl<'a> AnimDataBone<'a> {
         writer.end_element();
     }
 
-    // pub fn write_joints_to_file(mut self, frame: usize) {
-
-    //     // create a map with some minimal information about all the bones, keyed by their ids
-    //   for i in 0..self.get_num_bones() as usize {
-    //     let bone_data = &self.base_seq[i];
-    //     let current_node = Joint{
-    //       bone_id: bone_data.id,
-    //       bone_name: bone_data.get_name(),
-    //       parent: None,
-    //       children: Vec::new(),
-    //       parent_id: bone_data.parent_id,
-    //       transformation_matrix: None
-    //     };
-
-    //     if !self.bones.contains_key(&bone_data.id) {
-    //       self.bones.insert(bone_data.id, RefCell::new(current_node));
-    //     }
-    //   }
-
-    //   for (_, v) in self.bones.iter() {
-    //     let mut current_node = v.borrow_mut();
-    //     let parent = self.bones.get(&current_node.parent_id);
-    //     match parent {
-    //       Some(p) => {
-    //         current_node.parent = Some(p);
-    //         p.borrow_mut().children.push(v);
-    //       },
-    //       None => {
-    //       }
-    //     }
-    //   }
-
-    //   for i in 0..self.get_num_bones() as usize {
-    //     let key = &self.key_seq[i];
-    //     let bone_data = &self.base_seq[i];
-    //     let mut current_matrix:Matrix4<f32> = SquareMatrix::identity();
-
-    //     let frame_quat = match &key.quat_seq {
-    //       Some(e) => {
-    //         e
-    //       },
-    //       None => {
-    //         panic!("No frame_quat found");
-    //       }
-    //     };
-    //     let frame_pos = match &key.pos_seq {
-    //       Some(e) => {
-    //         e
-    //       },
-    //       None => {
-    //         panic!("No frame_pos found");
-    //       }
-    //     };
-
-    //     match self.header.key_type {
-    //       BoneInfoKeyType::BoneKeyTypeQuaternion => {
-    //         let quat: Quaternion<f32> = Quaternion::from(frame_quat[frame]);
-    //         let offset: Vector3<f32> = Vector3::from(frame_pos[frame]);
-    //         current_matrix = Matrix4::from(quat) * Matrix4::from_translation(offset);
-    //       },
-    //       _ => {
-
-    //       }
-    //     }
-
-    //     let Joint = self.bones.get(&bone_data.id);
-    //     match Joint {
-    //       Some(j) => {
-    //         j.borrow_mut().transformation_matrix = Some(current_matrix);
-    //       },
-    //       None => {
-    //         println!("No Joint found for bone {}", i);
-    //       }
-    //     }
-
-    //   }
-
-    //   self.joints = Some(self.bones.get(&0).unwrap().take());
-
-    //   let opt = Options {
-    //     use_single_quote: false,
-    //     ..Options::default()
-    //   };
-
-    //   let mut w = XmlWriter::new(opt);
-
-    //   let root_joint = match &self.joints {
-    //     Some(j) => j,
-    //     None => {
-    //       panic!("No root Joint found")
-    //     }
-    //   };
-
-    //   for i in 0..self.header.bone_num as usize {
-    //     self.write_node(&self.base_seq[i], &mut w);
-    //   }
-
-    //   // self.write_node(root_joint, &mut w);
-    //   let xml_data = w.end_document();
-
-    //   let mut file = File::create("rand.xml").unwrap();
-    //   file.write_all(xml_data.as_bytes()).unwrap();
-    // }
-
-    // fn write_node(&self, node: &BoneBaseInfo, writer: &mut XmlWriter) {
-    //   let base_anim_id = [node.get_name().to_owned(), String::from("_pose_matrix")].join("");
-
-    //   writer.start_element("animation");
-    //   writer.write_attribute("id", &base_anim_id);
-
-    //   writer.start_element("source");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "-input"));
-    //   writer.start_element("float_array");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "-input-array"));
-    //   writer.write_attribute("count", &self.header.frame_num);
-    //   for i in 1..(self.header.frame_num+1) as usize {
-    //     let time: f32 = i as f32 / 25.0 ;
-    //     writer.write_text(&(time.to_string() + " "));
-    //   }
-    //   writer.end_element();
-
-    //   writer.start_element("technique_common");
-    //   writer.start_element("accessor");
-    //   writer.write_attribute("source", &("#".to_owned() + &base_anim_id + "-input-array"));
-    //   writer.write_attribute("count", &self.header.frame_num);
-    //   writer.write_attribute("stride", &1);
-    //   writer.start_element("param");
-    //   writer.write_attribute("name", "TIME");
-    //   writer.write_attribute("type", "float");
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-
-    //   writer.start_element("source");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "-output"));
-    //   writer.start_element("float_array");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "-output-array"));
-    //   writer.write_attribute("count", &(16 * self.header.frame_num));
-
-    //   let mut all_transforms: Vec<Vec<Matrix4<f32>>> = Vec::new();
-    //   for i in 0..self.header.frame_num {
-    //     let transforms = self.get_transforms_for_frame_and_bone(i as usize, node.id as usize);
-    //     let mut one: Vec<Matrix4<f32>> = Vec::new();
-    //     all_transforms.push(transforms);
-    //   }
-
-    //   AnimDataBone::write_all_matrices(writer, all_transforms);
-    //   writer.end_element();
-
-    //   writer.start_element("technique_common");
-    //   writer.start_element("accessor");
-    //   writer.write_attribute("source", &("#".to_owned() + &base_anim_id + "-output-array"));
-    //   writer.write_attribute("count", &self.header.frame_num);
-    //   writer.write_attribute("stride", &16);
-    //   writer.start_element("param");
-    //   writer.write_attribute("name", "TRANSFORM");
-    //   writer.write_attribute("type", "float4x4");
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-
-    //   writer.start_element("source");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-interpolation"));
-    //   writer.start_element("Name_array");
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-interpolation-array"));
-    //   writer.write_attribute("count", &self.header.frame_num);
-    //   for _ in 0..self.header.frame_num {
-    //     writer.write_text("LINEAR ");
-    //   }
-    //   writer.end_element();
-    //   writer.start_element("technique_common");
-    //   writer.start_element("accessor");
-    //   writer.write_attribute("accessor", &("#".to_string() + &base_anim_id + "_matrix-interpolation-array"));
-    //   writer.write_attribute("count", &self.header.frame_num);
-    //   writer.write_attribute("stride", &1);
-    //   writer.start_element("param");
-    //   writer.write_attribute("name", "INTERPOLATION");
-    //   writer.write_attribute("type", "name");
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-    //   writer.end_element();
-
-    //   writer.start_element("sampler");
-
-    //   writer.write_attribute("id", &(base_anim_id.to_owned() + "_matrix-sampler"));
-    //   writer.start_element("input");
-    //   writer.write_attribute("semantic", "INPUT");
-    //   writer.write_attribute("source", &("#".to_string() + &base_anim_id + "-input"));
-    //   writer.end_element();
-    //   writer.start_element("input");
-    //   writer.write_attribute("semantic", "OUTPUT");
-    //   writer.write_attribute("source", &("#".to_string() + &base_anim_id + "-output"));
-    //   writer.end_element();
-    //   writer.start_element("input");
-    //   writer.write_attribute("semantic", "INTERPOLATION");
-    //   writer.write_attribute("source", &("#".to_string() + &base_anim_id + "_matrix-interpolation"));
-    //   writer.end_element();
-    //   writer.end_element();
-
-    //   writer.start_element("channel");
-    //   writer.write_attribute("source", &("#".to_string() + &base_anim_id + "_matrix-sampler"));
-    //   writer.write_attribute("target", &(node.get_name().to_owned() + "/transform"));
-    //   writer.end_element();
-    //   writer.end_element();
-    //   // AnimDataBone::write_ele_attrs(writer, node.bone_name.as_str());
-
-    //   // for i in 0..node.children.len() {
-    //   //   let child = (*(node.children[i])).take();
-    //   //   self.write_node(&child, writer);
-    //   // }
-    // }
-
-    // pub fn write_ele_attrs(ele: &mut XmlWriter, name: &str) {
-    //   ele.write_attribute("id", name);
-    //   ele.write_attribute("sid", name);
-    //   ele.write_attribute("name", name);
-    //   ele.write_attribute("type", "Joint");
-    // }
-
     pub fn write_matrix(&self, ele: &mut XmlWriter, matrix: Matrix4<f32>) {
         ele.start_element("matrix");
         ele.write_attribute("sid", "transform");
@@ -1071,6 +843,30 @@ impl<'a> AnimDataBone<'a> {
         ele.write_text_fmt(format_args!("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", mat[0][0], mat[0][1], mat[0][2], mat[0][3], mat[1][0], mat[1][1], mat[1][2], mat[1][3], mat[2][0], mat[2][1], mat[2][2], mat[2][3], mat[3][0], mat[3][1], mat[3][2], mat[3][3]));
       }
     }
+
+
+    pub fn load_data_from_collada_skeleton(&mut self, doc: &ColladaDocument) {
+        let skeletons = doc.get_skeletons().unwrap();
+
+        // we support only one skeleton in an animation for ToP lab files
+        if skeletons.len() > 1 {
+            panic!("More than one skeleton found. Invalid file format.");
+        }
+    
+        let main_skeleton = &skeletons[0];
+        
+        println!("{:?}", main_skeleton.joints);
+        // println!("{:?}", doc.get_bind_data_set().unwrap().bind_data[0]);
+    }
+
+
+
+
+
+
+
+
+
 }
 
 #[cfg(test)]
